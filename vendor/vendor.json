@@ -1,0 +1,37 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "H/Smh6uSKqa+WRwpmYuCKkHqeIk=",
+			"path": "github.com/Yawning/chacha20",
+			"revision": "70289bb2131350877f4b969b94ac4cf22eef9aa1",
+			"revisionTime": "2017-06-03T04:55:34Z"
+		},
+		{
+			"checksumSHA1": "WKs6QwVGg5QL2JxvOIjmKXBWFfI=",
+			"path": "github.com/shadowsocks/shadowsocks-go/shadowsocks",
+			"revision": "5c6f652e323ffe46b8b417408cd519fc15a11e70",
+			"revisionTime": "2017-01-23T07:41:46Z"
+		},
+		{
+			"checksumSHA1": "JsJdKXhz87gWenMwBeejTOeNE7k=",
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "728b753d0135da6801d45a38e6f43ff55779c5c2",
+			"revisionTime": "2017-01-24T01:46:54Z"
+		},
+		{
+			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",
+			"path": "golang.org/x/crypto/cast5",
+			"revision": "728b753d0135da6801d45a38e6f43ff55779c5c2",
+			"revisionTime": "2017-01-24T01:46:54Z"
+		},
+		{
+			"checksumSHA1": "w8PESKJweP+BCAxCYPU1QC08qUU=",
+			"path": "golang.org/x/crypto/salsa20/salsa",
+			"revision": "728b753d0135da6801d45a38e6f43ff55779c5c2",
+			"revisionTime": "2017-01-24T01:46:54Z"
+		}
+	],
+	"rootPath": "github.com/lwhile/ssclient"
+}
