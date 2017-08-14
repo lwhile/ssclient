@@ -4,9 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"flag"
-	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"net"
 	"os"
@@ -15,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/log"
 	ss "github.com/shadowsocks/shadowsocks-go/shadowsocks"
 )
 
@@ -188,7 +187,7 @@ func parseServerConfig(config *ss.Config) {
 
 		for i, s := range srvArr {
 			if hasPort(s) {
-				log.Println("ignore server_port option for server", s)
+				log.Infoln("ignore server_port option for server", s)
 				servers.srvCipher[i] = &ServerCipher{s, cipher}
 			} else {
 				servers.srvCipher[i] = &ServerCipher{net.JoinHostPort(s, srvPort), cipher}
@@ -232,7 +231,7 @@ func parseServerConfig(config *ss.Config) {
 	}
 	servers.failCnt = make([]int, len(servers.srvCipher))
 	for _, se := range servers.srvCipher {
-		log.Println("available remote server", se.server)
+		log.Infoln("available remote server", se.server)
 	}
 	return
 }
@@ -241,7 +240,7 @@ func connectToServer(serverId int, rawaddr []byte, addr string) (remote *ss.Conn
 	se := servers.srvCipher[serverId]
 	remote, err = ss.DialWithRawAddr(rawaddr, se.server, se.cipher.Copy())
 	if err != nil {
-		log.Println("error connecting to shadowsocks server:", err)
+		log.Infoln("error connecting to shadowsocks server:", err)
 		const maxFailCnt = 30
 		if servers.failCnt[serverId] < maxFailCnt {
 			servers.failCnt[serverId]++
@@ -295,12 +294,12 @@ func handleConnection(conn net.Conn) {
 
 	var err error = nil
 	if err = handShake(conn); err != nil {
-		log.Println("socks handshake:", err)
+		log.Infoln("socks handshake:", err)
 		return
 	}
 	rawaddr, addr, err := getRequest(conn)
 	if err != nil {
-		log.Println("error getting request:", err)
+		log.Infoln("error getting request:", err)
 		return
 	}
 	// Sending connection established message immediately to client.
@@ -315,7 +314,7 @@ func handleConnection(conn net.Conn) {
 	remote, err := createServerConn(rawaddr, addr)
 	if err != nil {
 		if len(servers.srvCipher) > 1 {
-			log.Println("Failed connect to all avaiable shadowsocks server")
+			log.Info("Failed connect to all avaiable shadowsocks server")
 		}
 		return
 	}
@@ -336,11 +335,11 @@ func run(listenAddr string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("starting local socks5 server at %v ...\n", listenAddr)
+	log.Infof("starting local socks5 server at %v ...\n", listenAddr)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Println("accept:", err)
+			log.Info("accept:", err)
 			continue
 		}
 		go handleConnection(conn)
@@ -352,8 +351,7 @@ func enoughOptions(config *ss.Config) bool {
 		config.LocalPort != 0 && config.Password != ""
 }
 
-func main() {
-	log.SetOutput(os.Stdout)
+func startService() {
 
 	var configFile, cmdServer, cmdLocal string
 	var cmdConfig ss.Config
@@ -393,15 +391,14 @@ func main() {
 	if (!exists || err != nil) && binDir != "" && binDir != "." {
 		oldConfig := configFile
 		configFile = path.Join(binDir, "config.json")
-		log.Printf("%s not found, try config file %s\n", oldConfig, configFile)
+		log.Infof("%s not found, try config file %s\n", oldConfig, configFile)
 	}
 
 	config, err := ss.ParseConfig(configFile)
 	if err != nil {
 		config = &cmdConfig
 		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "error reading %s: %v\n", configFile, err)
-			os.Exit(1)
+			log.Fatalln(os.Stderr, "error reading %s: %v\n", configFile, err)
 		}
 	} else {
 		ss.UpdateConfig(config, &cmdConfig)
@@ -411,20 +408,23 @@ func main() {
 	}
 	if len(config.ServerPassword) == 0 {
 		if !enoughOptions(config) {
-			fmt.Fprintln(os.Stderr, "must specify server address, password and both server/local port")
-			os.Exit(1)
+			log.Fatalln("must specify server address, password and both server/local port")
 		}
 	} else {
 		if config.Password != "" || config.ServerPort != 0 || config.GetServerArray() != nil {
-			fmt.Fprintln(os.Stderr, "given server_password, ignore server, server_port and password option:", config)
+			log.Fatalln("given server_password, ignore server, server_port and password option:", config)
 		}
 		if config.LocalPort == 0 {
-			fmt.Fprintln(os.Stderr, "must specify local port")
-			os.Exit(1)
+			log.Fatalln(os.Stderr, "must specify local port")
 		}
 	}
 
 	parseServerConfig(config)
 
 	run(cmdLocal + ":" + strconv.Itoa(config.LocalPort))
+}
+
+func main() {
+	// TODO: 支持以后台服务运行
+	startService()
 }
